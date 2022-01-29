@@ -1,0 +1,37 @@
+{
+  "name": "pactl",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "android:pdaDebugger": "set ENVFILE='.env.pda' && react-native run-android --variant=pdaDebug --appIdSuffix=pda",
+    "android:vehicleDebugger": "cross-env ENVFILE='.env.vehicle' && react-native run-android --variant=vehicleDebug --appIdSuffix=vehicle",
+    "android:pdaRelease": "set ENVFILE='.env.pda' && cd android && ./gradlew assemblePdaRelease",
+    "ios": "react-native run-ios",
+    "start": "react-native start",
+    "test": "jest",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "babel-plugin-transform-inline-environment-variables": "^0.4.3",
+    "cross-env": "^7.0.3",
+    "react": "17.0.2",
+    "react-native": "0.67.1",
+    "react-native-config": "^1.4.5",
+    "react-native-splash-screen": "^3.3.0",
+    "react-native-vision-camera": "^2.12.0",
+    "react-native-webview": "^11.17.1"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.12.9",
+    "@babel/runtime": "^7.12.5",
+    "@react-native-community/eslint-config": "^2.0.0",
+    "babel-jest": "^26.6.3",
+    "eslint": "7.14.0",
+    "jest": "^26.6.3",
+    "metro-react-native-babel-preset": "^0.66.2",
+    "react-test-renderer": "17.0.2"
+  },
+  "jest": {
+    "preset": "react-native"
+  }
+}
