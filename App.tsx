@@ -1,32 +1,36 @@
-import React, {useEffect, useState, useRef, useCallback} from 'react';
+import React, {useEffect, useState, useRef, useCallback, FunctionComponent} from 'react';
 import {Dimensions, BackHandler} from 'react-native';
 import {WebView} from 'react-native-webview';
 const width = Dimensions.get('window').width;
 const height = Dimensions.get('window').height;
 import splashScreen from 'react-native-splash-screen';
-import MyCamera from './src/components/camera';
+import MyCamera, {CameraRef} from './src/components/camera';
 import deployConfig from './src/common/deployConfig';
 import bridge from './src/common/bridge';
 
-const App = () => {
-  const cameraRef = useRef(null);
-  const webviewRef = useRef(null);
+
+export interface AppProps {}
+const App: FunctionComponent<AppProps> = () => {
+  const cameraRef = useRef<CameraRef>(null);
+  const webviewRef = useRef<WebView>(null);
   const [webviewCanGoBack, setWebviewCanGoBack] = useState(false);
 
+  const onBackPress = useCallback(() => {
+    if (webviewCanGoBack && webviewRef.current) {
+      webviewRef.current.goBack();
+      return true;
+    }
+    return false;
+  }, []);
+
   useEffect(() => {
-    BackHandler.removeEventListener('hardwareBackPress');
-    BackHandler.addEventListener('hardwareBackPress', () => {
-      if (webviewCanGoBack) {
-        webviewRef.current.goBack();
-        return true;
-      }
-      return false;
-    });
-  }, [webviewCanGoBack, webviewRef]);
+    BackHandler.removeEventListener('hardwareBackPress', onBackPress);
+    BackHandler.addEventListener('hardwareBackPress', onBackPress);
+  }, [webviewCanGoBack, webviewRef, onBackPress]);
 
   useEffect(() => {
     return () => {
-      BackHandler.removeEventListener('hardwareBackPress');
+      BackHandler.removeEventListener('hardwareBackPress', onBackPress);
     };
   }, []);
 
@@ -39,8 +43,8 @@ const App = () => {
       const {nativeEvent} = event;
       const {data} = nativeEvent;
       bridge.runKitFunction(data, {
-        takePhoto: params => {
-          cameraRef.current.grantAndActiveCamera();
+        takePhoto: () => {
+          cameraRef.current && cameraRef.current.grantAndActiveCamera();
         },
       });
     },

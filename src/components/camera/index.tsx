@@ -4,6 +4,7 @@ import React, {
   useRef,
   useState,
   useImperativeHandle,
+  FunctionComponent,
 } from 'react';
 import {Dimensions, View, Image, TouchableOpacity} from 'react-native';
 import {Camera, useCameraDevices} from 'react-native-vision-camera';
@@ -11,12 +12,23 @@ import styles from './styles';
 
 const width = Dimensions.get('window').width;
 const height = Dimensions.get('window').height;
+const cameraStyle = {width, height}
 // props with function onGetPhotoURI
-const MyCamera = forwardRef((props, ref) => {
-  const cameraRef = useRef(null);
-  const [grant, setGrant] = useState(null);
+
+export interface CameraProps {
+  ref: any
+  onGetPhotoURI: (uri: string) => void
+}
+
+export interface CameraRef {
+  grantAndActiveCamera: () => void
+}
+
+const MyCamera: FunctionComponent<CameraProps> = forwardRef((props, ref) => {
+  const cameraRef = useRef<Camera>(null);
+  const [grant, setGrant] = useState<string>('');
   const [cameraActive, setCameraActive] = useState(false);
-  const [previewURI, setPreviewURI] = useState(null);
+  const [previewURI, setPreviewURI] = useState<string>('');
   const devices = useCameraDevices();
   const backDeviceReady = devices.back;
 
@@ -45,13 +57,13 @@ const MyCamera = forwardRef((props, ref) => {
     <>
       {showCameraLayer ? (
         <View>
-          <Camera
-            style={{width, height}}
+          {backDeviceReady && <Camera
+            style={cameraStyle}
             photo={true}
             device={backDeviceReady}
             ref={cameraRef}
             isActive={true}
-          />
+          />}
           <TouchableOpacity
             style={styles.closeCameraButtonBox}
             onPress={() => {
@@ -65,8 +77,10 @@ const MyCamera = forwardRef((props, ref) => {
           <View style={styles.cameraButtonBox}>
             <TouchableOpacity
               onPress={async () => {
-                const photo = await cameraRef.current.takePhoto();
-                setPreviewURI(`file://${photo.path}`);
+                if(cameraRef.current) {
+                  const photo = await cameraRef.current.takePhoto();
+                  setPreviewURI(`file://${photo.path}`);
+                }
               }}
               style={styles.cameraButton}
             />
