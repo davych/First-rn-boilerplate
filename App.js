@@ -1,50 +1,44 @@
-import React, {useEffect, useMemo, useRef, useCallback} from 'react';
-import {
-  ScrollView,
-  Text,
-  Dimensions,
-  View,
-  Image,
-  StyleSheet,
-  TouchableOpacity,
-} from 'react-native';
+import React, {useEffect, useState, useRef, useCallback} from 'react';
+import {Dimensions, BackHandler} from 'react-native';
 import {WebView} from 'react-native-webview';
 const width = Dimensions.get('window').width;
 const height = Dimensions.get('window').height;
-import Config from 'react-native-config';
 import splashScreen from 'react-native-splash-screen';
 import MyCamera from './src/components/camera';
-class BridgeKit {
-  injectedJavascript = `(function() {
-    window.postMessage = function(data) {
-      window.ReactNativeWebView.postMessage(data);
-  };
-  })()`;
-  setWebViewRef(webView) {
-    this.webView = webView;
-  }
-  runKit(data, kit) {
-    const {method, params} = JSON.parse(data);
-    kit[method] && kit[method](params);
-  }
-  postMessage(data) {
-    this.webView.postMessage(data);
-  }
-}
-const bridgeKit = new BridgeKit();
+import deployConfig from './src/common/deployConfig';
+import bridge from './src/common/bridge';
+
 const App = () => {
   const cameraRef = useRef(null);
   const webviewRef = useRef(null);
+  const [webviewCanGoBack, setWebviewCanGoBack] = useState(false);
 
   useEffect(() => {
-    bridgeKit.setWebViewRef(webviewRef.current);
+    BackHandler.removeEventListener('hardwareBackPress');
+    BackHandler.addEventListener('hardwareBackPress', () => {
+      if (webviewCanGoBack) {
+        webviewRef.current.goBack();
+        return true;
+      }
+      return false;
+    });
+  }, [webviewCanGoBack, webviewRef]);
+
+  useEffect(() => {
+    return () => {
+      BackHandler.removeEventListener('hardwareBackPress');
+    };
+  }, []);
+
+  useEffect(() => {
+    bridge.setWebViewRef(webviewRef.current);
   }, [webviewRef]);
 
   const onWebViewInvokeMessage = useCallback(
     event => {
       const {nativeEvent} = event;
       const {data} = nativeEvent;
-      bridgeKit.runKit(data, {
+      bridge.runKitFunction(data, {
         takePhoto: params => {
           cameraRef.current.grantAndActiveCamera();
         },
@@ -54,7 +48,7 @@ const App = () => {
   );
 
   const onGetPhotoURI = useCallback(uri => {
-    bridgeKit.postMessage(
+    bridge.postMessage(
       JSON.stringify({method: 'onGetPhotoURI', params: {uri}}),
     );
   }, []);
@@ -70,7 +64,7 @@ const App = () => {
         thirdPartyCookiesEnabled
         domStorageEnabled
         javaScriptEnabled
-        injectedJavaScript={bridgeKit.injectedJavascript}
+        injectedJavaScript={bridge.injectedJavascript}
         onLoadEnd={() => {
           splashScreen.hide();
         }}
@@ -78,7 +72,10 @@ const App = () => {
         style={{width, height}}
         originWhitelist={['*']}
         onMessage={onWebViewInvokeMessage}
-        source={{uri: 'file:///android_asset/index.html'}}
+        onNavigationStateChange={navState => {
+          setWebviewCanGoBack(navState.canGoBack);
+        }}
+        source={{uri: deployConfig.webviewEntrance}}
       />
     </>
   );
