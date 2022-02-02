@@ -6,6 +6,8 @@
     "android:pdaDebugger": "set ENVFILE='.env.pda' && react-native run-android --variant=pdaDebug --appIdSuffix=pda",
     "android:vehicleDebugger": "cross-env ENVFILE='.env.vehicle' && react-native run-android --variant=vehicleDebug --appIdSuffix=vehicle",
     "android:pdaRelease": "set ENVFILE='.env.pda' && cd android && ./gradlew assemblePdaRelease",
+    "android:vehicleRelease": "set ENVFILE='.env.vehicle' && cd android && ./gradlew assembleVehicleRelease",
+    "android:release": "yarn android:pdaRelease && yarn android:vehicleRelease",
     "ios": "react-native run-ios",
     "start": "react-native start",
     "test": "jest",
